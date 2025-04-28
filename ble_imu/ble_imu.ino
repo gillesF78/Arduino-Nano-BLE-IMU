@@ -3,7 +3,7 @@
  */
 
 #include <ArduinoBLE.h>
-#include <Arduino_LSM6DS3.h>
+#include "Arduino_BMI270_BMM150.h"
 
 #define DEBUG false
 
@@ -21,7 +21,7 @@ typedef union {
 } imuunion_t;
 
 typedef union {
-    unsigned long data;
+    float data;
     uint8_t bytes[4];
 } ulongunion_t;
 
@@ -47,7 +47,7 @@ void setup() {
   }
 
   // set advertised local name and service UUID:
-  BLE.setLocalName("Arduino Nano 33 BLE Sense");
+  BLE.setLocalName("Arduino Nano 33 BLE");
   BLE.setAdvertisedService(nanoIMUService);
 
   // add the characteristic to the service
@@ -77,21 +77,16 @@ void loop() {
 
     // while the central is still connected to peripheral:
     while (central.connected()) {
-        if (IMU.accelerationAvailable() && IMU.gyroscopeAvailable()) {
-            // Get current time 
-            _time.data = micros();
-            // Update first four bytes of IMU data union.
-            for (int i = 0; i < 4;i ++) {
-                _imudata.bytes[i] = _time.bytes[i];
-            }
+            _imudata.timeaccgyr[0] = millis();
             IMU.readAcceleration(_imudata.timeaccgyr[1], _imudata.timeaccgyr[2], _imudata.timeaccgyr[3]);
             IMU.readGyroscope(_imudata.timeaccgyr[4], _imudata.timeaccgyr[5], _imudata.timeaccgyr[6]);
             acclGyroCharacteristic.writeValue(_imudata.bytes, 28);
-        }
     }
     
     // when the central disconnects, print it out:
     Serial.print(F("Disconnected from central: "));
     Serial.println(central.address());
   }
+
+  delay(100);
 }
